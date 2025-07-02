@@ -1,0 +1,16 @@
+{
+    "files.watcherExclude": {
+        "**/target": true
+    },
+    "metals.inlayHints.inferredTypes.enable": true,
+    "metals.inlayHints.implicitConversions.enable": true,
+    "metals.inlayHints.typeParameters.enable": true,
+    "metals.inlayHints.namedParameters.enable": true,
+    "metals.inlayHints.hintsInPatternMatch.enable": true,
+    "metals.inlayHints.implicitArguments.enable": true,
+    "metals.inlayHints.byNameParameters.enable": true,
+    "metals.enableIndentOnPaste": true,
+    "metals.enableBestEffort": true,
+    "metals.defaultBspToBuildTool": true,
+    "metals.verboseCompilation": true
+}
