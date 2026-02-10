@@ -9,10 +9,12 @@
   <ItemGroup>
     <PackageReference Include="Duende.AccessTokenManagement" Version="3.2.0" />
     <PackageReference Include="Duende.AccessTokenManagement.OpenIdConnect" Version="3.2.0" />
-    <PackageReference Include="Duende.IdentityModel" Version="7.0.0" />
-    <PackageReference Include="Duende.IdentityServer" Version="7.2.4" />
-    <PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="7.2.4" />
+    <PackageReference Include="Duende.IdentityModel" Version="8.0.0" />
+    <PackageReference Include="Duende.IdentityServer" Version="7.4.3" />
+    <PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="7.4.3" />
     <PackageReference Include="IdentityModel.AspNetCore.OAuth2Introspection" Version="6.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="9.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
@@ -30,6 +32,12 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.12.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.12.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+    <PackageReference Include="Rsk.DynamicAuthenticationProviders" Version="3.3.0" />
+    <PackageReference Include="Rsk.DynamicAuthenticationProviders.Saml" Version="3.3.0" />
+    <PackageReference Include="Rsk.Saml" Version="11.0.0" />
+    <PackageReference Include="Rsk.Saml.DuendeIdentityServer" Version="11.0.0" />
+    <PackageReference Include="Rsk.Saml.IdentityProvider" Version="11.0.0" />
+    <PackageReference Include="Rsk.TokenExchange.DuendeIdentityServer" Version="1.0.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.0" />
   </ItemGroup>

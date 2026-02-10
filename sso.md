@@ -6,12 +6,9 @@ In general, SSO authentication works as follows:
 
 - A user logs into one of the service providers, or into a central portal (such as an company intranet or college student portal) using SSO login credentials.
      
-
 - When the user is successfully authenticated, the SSO solution generates a session authentication token containing specific information about the user's identity—a username, email address, etc. This token is stored with the user's web browser, or in the SSO system.
      
 - When the user attempts to access another trusted service provider, the application checks with the SSO system to determine if user is already authenticated for the session. If so, the SSO solution validates the user by signing the authentication token with a digital certificate, and the user is granted access to the application. If not, the user is prompted to reenter login credentials.
-
-
 
 ## Federated identity management (FIM)
 
@@ -25,29 +22,23 @@ Federated identity management, or FIM, is a superset of SSO. While SSO is based 
 
 Choosing an SSO method depends on how the application is configured for authentication. Cloud applications can use federation-based options, such as OpenID Connect, and SAML. The application can also use password-based SSO, linked-based SSO, or SSO can be disabled.
 
-
-
 In computing, a federation refers to the collaboration of multiple independent organizations or systems working together to achieve a common goal. 
 
 [federation-computing](https://www.baeldung.com/cs/federation-computing)
 
 `A federation in computing is a group of organizations or systems that maintain their autonomy but agree to share data, resources, or services to achieve a shared objective`. Federations can be established between different organizations, software applications, or even networks to create a unified, collaborative environment. The participants in a federation typically agree on a set of standards, protocols, and policies to facilitate cooperation and interoperability.
 
-
 1. ## Federated Identity Management
 
 Federated identity management enables users to access multiple independent systems using a single set of credentials. This approach simplifies the authentication process, reduces the number of passwords users need to remember and enhances security. Federated identity management can be implemented using protocols such as Security Assertion Markup Language (SAML), OpenID Connect, and OAuth.
-
 
 ## Use Cases
 
 Federations have numerous applications in computing. 
 
-
 ![alt text](image-1.png)
 
 SSO is only a part of a federated identity management system
-
 
 [federated-identity](https://www.baeldung.com/cs/sso-guide#1-federated-identity)
 A Single Sign-On mechanism (SSO) allows users to log in once to an application and get access to all related systems without the need to separately log in to them.
@@ -88,7 +79,6 @@ The common use case is handled by `WEB SSO`. `WEB SSO is intended only for servi
 This architecture usually uses cookies for tracking the state of authentication of the user. The SSO process described in the previous section applies to WEB SSO architecture.
 
 `The federated SSO architecture provides authentication data (usually token) trusted across separate organizations`. That architecture uses popular protocols like WS-Federation, OAuth, or SAML to pass tokens. SSO architecture is especially useful in situations when multiple organizations are cooperating.
-
 
 ## When is Federated SSO especially useful?
 
@@ -142,9 +132,6 @@ SSO streamlines authentication, allowing users to log in once and securely acces
 - `Collaboration with External Partners`: Federated SSO enables businesses to integrate securely with partner systems without redundant authentication. For example, It Allows employees to access partner-provided SaaS tools like Salesforce or Asana using their enterprise credentials.
 - `Unified Authentication` Simplifies access for developers working across multiple internal and external platforms. For example, a developer authenticates once to access all company SaaS applications, ensuring alignment with organizational IAM policies.
 
-
-     
-
 ## SSO Workflow
 
 The following steps illustrate the SSO workflow when implemented with the LoginRadius Identity Platform:
@@ -153,7 +140,6 @@ The following steps illustrate the SSO workflow when implemented with the LoginR
 - Authentication at the IDP: At the IDP, the user enters their credentials and is authenticated. A session is established, and the user is logged into Site A.
 - Whenever the same user visits Site B (Service Provider) and clicks the login link, they are redirected to the IDP.
 - Since the user’s session is still active, the IDP recognizes it and logs the user into Site B without requiring re-authentication.
-
 
 ## Types of SSO
 
@@ -184,8 +170,6 @@ Note: This benefits organizations requiring specialized authentication beyond st
 - `SSO Connectors`: These provide authentication solutions for legacy systems or applications not supporting modern SSO protocols, ensuring a unified login experience.
 Note: This is essential for businesses integrating older software with contemporary authentication methods. For example, an enterprise unifies access between its legacy resource planning software and a newly deployed mobile application.
 
-
-
 [loginradius-sso-web-sso](https://www.loginradius.com/docs/single-sign-on/loginradius-sso/web-sso/)
 
 ## Web SSO Visual Flow
@@ -198,11 +182,9 @@ The following displays the sequence diagram of the Web SSO process:
 
 ![alt text](image-6.png)
 
-
 ## Federated SSO
 
 Federated Single Sign-On (SSO) enables seamless access to third-party applications through trust relationships and standardized protocols for managing and mapping user identities.
-
 
 Common Use Cases
 
@@ -221,15 +203,10 @@ Streamlines authentication for patients and providers across multiple healthcare
 - `B2B Collaborations`:
 Simplifies secure access for partners and contractors to shared resources and tools within a controlled environment.
 
-
-
 ## OpenID Connect
 OpenID Connect 1.0 is a simple identity layer built on the OAuth 2.0 protocol. It allows clients to authenticate end-users by leveraging the Authorization Server's verification process. In addition, it provides access to essential profile details, such as the user's name and email. OpenID Connect simplifies user identity management in web and mobile applications by combining authentication and authorization, delivering secure and seamless user experiences across various platforms.
 
-
-
 [openid-connect-overview/](https://www.loginradius.com/docs/single-sign-on/federated-sso/openid-connect/overview/)
-
 
 ## OAuth 2.0
 
@@ -321,7 +298,6 @@ OAuth 2.0 Clients using OpenID Connect are also referred to as Relying Parties (
 ```sh
 User logout can be initiated either at RP (application) first or at the OpenID Provider (OP) first. Whichever party (RP or OP) gets the logout request first, and has to inform the other party about the event so that both the RP and OP sessions get properly terminated. RP-initiated logout is RP's method to let OP know about the event while Front-channel logout or back-channel logouts are the mechanisms used by OP to initiate logout and let RP know.
 ```
-
 
 ## Session Management
 
@@ -516,3 +492,48 @@ Modern SSO leverages social login, where users can access applications using the
 - OneLogin
 - PingIdentity
 - Keycloak
+
+
+[guide-to-openid-saml-oauth](https://www.loginradius.com/blog/engineering/guide-to-openid-saml-oauth)
+
+![alt text](image-17.png)
+
+
+### What's the point of federation?
+
+I rememeber seeing a keynote in 2018 at KubeCon where person X demoed an integration between two services with one of them running on AWS and the other running on GCP. Normally that would mean producing a number of secrets and configuring them on either side. His demo was different because there was a level of trust between the two sides, fedration if you will.
+
+The Oxford dictionary describes "federation" as:
+ the action of forming states or organizations into a single group with centralized control.
+
+Centralised control within a single group sounds useful and just like X showed us GCP and AWS working in harmony
+```sh
+GCP's Workload Identity Federation technology.
+AWS has a similar technology with its IAM (Identity Access Management), IdP (Identity Provider) and Secure Token Service (STS).
+```
+
+Before federation:
+
+- Create a Google Cloud service account and grant IAM permissions
+- Export the long-lived JSON service account key
+- Upload the JSON service account key to a GitHub secret
+
+After:
+
+- Create a Google Cloud service account and grant IAM permissions
+- Create and configure a Workload Identity Provider for GitHub
+- Exchange the GitHub Actions OIDC token for a short-lived Google Cloud access token
+
+
+```sh
+This GitHub Action exchanges a GitHub Actions OIDC token into a Google Cloud access token using Workload Identity Federation. This obviates the need to export a long-lived Google Cloud service account key and establishes a trust delegation relationship between a particular GitHub Actions workflow invocation and permissions on Google Cloud
+```
+
+
+`ACTIONS_ID_TOKEN_REQUEST_URL`
+and `ACTIONS_ID_TOKEN_REQUEST_TOKEN`
+
+```curl
+    OIDC_TOKEN=$(curl -sLS "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=minty.exit.o6s.io" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+    ```
+

@@ -7,12 +7,17 @@ using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Serilog;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Duende.IdentityServer.Configuration;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 namespace DuendeProfileServiceAspNetCoreIdentity;
 
 internal static class HostingExtensions
 {
-    public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
+    public static async Task<WebApplication> ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddRazorPages();
 
@@ -23,21 +28,21 @@ internal static class HostingExtensions
         //     .AddEntityFrameworkStores<ApplicationDbContext>()
         //     .AddDefaultTokenProviders();
 
-builder.Services.AddAuthentication("Default")
-    .AddPolicyScheme("Default", "Default scheme", options =>
-    {
-        options.ForwardDefaultSelector = context =>
-        {
-            // If this is an API request, use JWT
-            if (context.Request.Path.StartsWithSegments("/api"))
-                return "Bearer";
+        builder.Services.AddAuthentication("Default")
+            .AddPolicyScheme("Default", "Default scheme", options =>
+            {
+                options.ForwardDefaultSelector = context =>
+                {
+                    // If this is an API request, use JWT
+                    if (context.Request.Path.StartsWithSegments("/api"))
+                        return "Bearer";
 
-            // Otherwise use cookies
-            return "Cookies";
-        };
-    })
-    .AddJwtBearer("Bearer", options => { /* ... */ })
-    .AddCookie("Cookies", options => { /* ... */ });
+                    // Otherwise use cookies
+                    return "Cookies";
+                };
+            })
+            .AddJwtBearer("Bearer", options => { /* ... */ })
+            .AddCookie("Cookies", options => { /* ... */ });
 
         builder.Services
             .AddIdentityServer(options =>
@@ -47,9 +52,9 @@ builder.Services.AddAuthentication("Default")
                 options.Events.RaiseFailureEvents = true;
                 options.Events.RaiseSuccessEvents = true;
             })
-            .AddInMemoryIdentityResources(Config.IdentityResources)
-            .AddInMemoryApiScopes(Config.ApiScopes)
-            .AddInMemoryClients(Config.Clients)
+            .AddInMemoryIdentityResources(Config.GetIdentityResources())
+            .AddInMemoryApiScopes(Config.GetApiScopes())
+            .AddInMemoryClients(Config.GetClients())
             .AddAspNetIdentity<ApplicationUser>()
             .AddLicenseSummary()
             .AddProfileService<IProfileService>();
@@ -79,7 +84,7 @@ builder.Services.AddAuthentication("Default")
             options.Scope.Add("profile");
             options.Scope.Add("email");
             options.Scope.Add("auth0-user-api-one");
-                
+
             options.ClaimsIssuer = "Auth0";
             options.SaveTokens = true;
             options.UsePkce = true;
@@ -132,6 +137,7 @@ builder.Services.AddAuthentication("Default")
                 }
             };
         })
+        //.AddId
         .AddOpenIdConnect("EntraID", "EntraID", oidcOptions =>
         {
             builder.Configuration.Bind("AzureAd", oidcOptions);
@@ -154,50 +160,162 @@ builder.Services.AddAuthentication("Default")
             oidcOptions.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
             oidcOptions.TokenValidationParameters.RoleClaimType = "role";
         });
-        // This code creates it own scheme and so does not fit well into identity and external authentication
-        //.AddMicrosoftIdentityWebApp(options =>
-        //{
-        //    builder.Configuration.Bind("AzureAd", options);
-        //    options.SignInScheme = "mscreatedscheme"; // you would need to add this to the callback an the logout
-        //    options.SignOutScheme = IdentityConstants.ApplicationScheme;
-        //
-        //    options.CallbackPath = "/signin-oidc";
-        //    options.RemoteSignOutPath = "/signout-callback-oidc";
-        //    options.SignedOutCallbackPath = "/signout-oidc";
-        //
-        //    options.MapInboundClaims = false;
-        //    options.UsePkce = true;
-        //    options.Events = new OpenIdConnectEvents
-        //    {
-        //        OnRedirectToIdentityProvider = context =>
-        //        {
-        //            context.ProtocolMessage.AcrValues = "http://schemas.openid.net/pape/policies/2007/06/multi-factor";
-        //            return Task.FromResult(0);
-        //        },
-        //        OnTokenResponseReceived = context =>
-        //        {
-        //            var idToken = context.TokenEndpointResponse.IdToken;
-        //            return Task.CompletedTask;
-        //        }
-        //    };
-        //}, copt => { }, "EntraID", "mscreatedscheme", false, "Entra ID")
-        //.EnableTokenAcquisitionToCallDownstreamApi(["User.Read"])
-        //.AddMicrosoftGraph()
-        //.AddDistributedTokenCaches();
-builder.Services.AddAuthentication("Smart")
-    .AddPolicyScheme("Smart", "Auto Select", options =>
-    {
-        options.ForwardDefaultSelector = context =>
+
+        builder.Services.AddAuthentication("Smart")
+        .AddPolicyScheme("Smart", "Auto Select", options =>
         {
-            return context.Request.Headers.ContainsKey("Authorization") ? "Bearer" : "Cookies";
-        };
-    });
+            options.ForwardDefaultSelector = context =>
+            {
+                return context.Request.Headers.ContainsKey("Authorization") ? "Bearer" : "Cookies";
+            };
+        });
 
         builder.Services.AddRazorPages();
-           //.AddMicrosoftIdentityUI();
+        //.AddMicrosoftIdentityUI();
+
+        builder.Services.AddAuthentication()
+        .AddJwtBearer("some-scheme", jwtOptions =>
+        {
+            jwtOptions.MetadataAddress = builder.Configuration["Api:MetadataAddress"] ?? string.Empty;
+            // Optional if the MetadataAddress is specified
+            jwtOptions.Authority = builder.Configuration["Api:Authority"];
+            jwtOptions.Audience = builder.Configuration["Api:Audience"];
+            jwtOptions.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidAudiences = builder.Configuration.GetSection("Api:ValidAudiences").Get<string[]>(),
+                ValidIssuers = builder.Configuration.GetSection("Api:ValidIssuers").Get<string[]>()
+            };
+
+            jwtOptions.MapInboundClaims = false;
+        });
+
+        // // SP configuration - dynamic providers
+        // builder.Services.AddSamlDynamicProvider(options =>
+        //         {
+        //             // unstorable/reusable data, such as license information and events. This will override the data stored
+        //             options.Licensee =  "{Input Licensee}";
+        //             options.LicenseKey =  "{Input LicenseKey}";
+        //             options.SignedOutCallbackPath = "/federation/saml/slo";  //Takes a SAMLRESPONSE during SP initiated SLO
+        //             options.LogSamlMessages = true;
+        //             options.TimeComparisonTolerance = 300;
+        //         })
+
+        //             // Use EntityFramework store for storing identity providers
+        //             //.AddIdentityProviderStore<SamlIdentityProviderStore>();
+
+        //             // use in memory store for storing identity providers
+        //             .AddInMemoryIdentityProviders(new List<IdentityProvider>
+        //             {
+        //                     new SamlDynamicIdentityProvider
+        //                     {   
+
+        //                         Scheme = "saml",
+        //                         DisplayName = "saml",
+        //                         Enabled = true,
+        //                         SamlAuthenticationOptions = new Saml2pAuthenticationOptions
+        //                         {
+        //                             CallbackPath = "/federation/saml/signin-saml", // Duende prefixes "/federation/{scheme}/{suffix}" to all paths
+        //                             SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme,
+        //                             SignOutScheme = "idsrv", // main cookie user is signed into
+        //                             TimeComparisonTolerance = 7200,
+        //                             // The IdP you want to integrate with
+        //                             IdentityProviderOptions = new IdpOptions
+        //                             {
+        //                                 EntityId = "https://localhost:5000",
+        //                                 SigningCertificates = { new X509Certificate2("./src/Duende.FederatedGateway/idsrv3test.cer") },
+        //                                 SingleSignOnEndpoint = new SamlEndpoint("https://localhost:5000/saml/sso", SamlBindingTypes.HttpRedirect),
+        //                                 SingleLogoutEndpoint = new SamlEndpoint("https://localhost:5000/saml/slo", SamlBindingTypes.HttpRedirect)
+
+        //                             },
+
+        //                             // Details about yourself (the SP) - In This care the Federated Gateway
+        //                             ServiceProviderOptions = new SpOptions
+        //                             {
+        //                                 EntityId = "https://localhost:5004/saml",
+        //                                 MetadataPath = "/federation/saml/metadata",
+        //                                 SignAuthenticationRequests = false // OPTIONAL - use if you want to sign your auth requests
+        //                             }
+        //                         }
+        //                     }
+        //             });
+
+        //var externalLoginResult= await GetHttpContextExtensions.GetHttpContext.AuthenticateAsync("myscheme");
+
+        builder.Services.AddIdentityServer(options =>
+                   {
+                       options.KeyManagement.Enabled = true;
+                       options.KeyManagement.SigningAlgorithms = new[] {
+                    new SigningAlgorithmOptions("RS256") {UseX509Certificate = true}
+                       };
+
+                       options.Events.RaiseErrorEvents = true;
+                       options.Events.RaiseInformationEvents = true;
+                       options.Events.RaiseFailureEvents = true;
+                       options.Events.RaiseSuccessEvents = true;
+
+                       // see https://docs.duendesoftware.com/identityserver/v5/fundamentals/resources/
+                       options.EmitStaticAudienceClaim = true;
+                   })
+                   .AddSamlPlugin(options =>
+                   {
+                       options.Licensee = LicenseKey.Licensee;
+                       options.LicenseKey = LicenseKey.Key;
+
+                       options.WantAuthenticationRequestsSigned = false;
+                   }).AddInMemoryServiceProviders(Config.GetServiceProviders());
+
+        builder.Services.AddAuthorization(options =>
+      {
+          options.AddPolicy("RequireAuthenticatedUser", policy =>
+          {
+              policy.RequireAuthenticatedUser();
+          });
+
+          options.AddPolicy("MfaRequired", policy =>
+          {
+              policy.RequireAssertion(context =>
+              {
+                  var acrClaim = context.User.FindFirst("acr")?.Value;
+                  return acrClaim == "http://schemas.openid.net/pape/policies/2007/06/multi-factor";
+              });
+          });
+
+          options.AddPolicy("Auth0MfaRequired", policy =>
+          {
+              policy.RequireAuthenticatedUser();
+              policy.RequireAssertion(context =>
+              {
+                  var acrClaim = context.User.FindFirst("amr")?.Value;
+                  return acrClaim != null && acrClaim.Contains("mfa");
+              });
+
+          });
+
+          options.AddPolicy("EntraIDMfaRequired", policy =>
+          {
+              policy.RequireAuthenticatedUser();
+              policy.RequireAssertion(context =>
+              {
+                  var acrClaim = context.User.FindFirst("acr")?.Value;
+                  return acrClaim == "http://schemas.microsoft.com/claims/multipleauthn";
+              });
+          });
+
+          options.AddPolicy("ApiScope", policy =>
+               {
+                   policy.RequireAuthenticatedUser();
+                   policy.RequireClaim("scope", "auth0-user-api-one");
+               });
+
+      });
 
         return builder.Build();
     }
+
+
 
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
@@ -220,6 +338,13 @@ builder.Services.AddAuthentication("Smart")
     }
 }
 
+internal class LicenseKey
+{
+    internal static string Licensee = string.Empty;
+    internal static string Key = string.Empty;
+}
+
 internal class ApplicationUser
 {
 }
+

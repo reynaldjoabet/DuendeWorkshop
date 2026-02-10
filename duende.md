@@ -87,18 +87,11 @@ services.AddAuthentication()
         options.ClientId = "your-azure-client-id";
         options.ClientSecret = "your-azure-client-secret";
         options.ResponseType = "code";
-    })
-    .AddFacebook("facebook", options =>
-    {
-        options.AppId = "your-facebook-app-id";
-        options.AppSecret = "your-facebook-app-secret";
-    });
-   
+    })  
 
 ```
 
 The `"google"`, `"azuread"`, and `"facebook"` are the authentication scheme names and must match what you use in IdentityProviderRestrictions.
-
 
 ### AddAuthentication()
 
@@ -107,7 +100,6 @@ This is the core setup for authentication in ASP.NET Core. It:
 - Sets the default authentication scheme
 - Sets the default challenge scheme (used when authentication is required but missing)
 - Initializes the authentication system
-
 
 ```c#
 services.AddAuthentication(options =>
@@ -123,7 +115,6 @@ providers like `AddGoogle()`, `AddFacebook()`, etc are shortcuts (wrappers) for 
 
 - `AddGoogle()` is essentially preconfigured `AddOAuth()` with Google's endpoints
 - `AddFacebook()` wraps `AddOAuth()` for Facebook
-
 
 You must use `AddOpenIdConnect()` and configure Google manually as an OpenID Connect provider.
 
@@ -493,5 +484,105 @@ An authentication scheme's authenticate action is responsible for constructing t
 - A cookie authentication scheme constructing the user's identity from cookies.
 - A JWT bearer scheme deserializing and validating a JWT bearer token to construct the user's identity.
 
+`<service>.<resource>.<action>`
+
+`unison.pay.mobile` not ideal as
+OAuth2 scopes should express authorization, not:
+- client type (mobile)
+- platform (web, ios, android)
+environment (prod, sandbox)
+
+```
+ http://localhost:5000/.well-known/openid-configuration
+```
+```sh
+http://localhost:5000/.well-known/openid-configuration
+```
+
+```c#
+
+namespace Duende.IdentityServer.Validation;
+
+/// <summary>
+/// Allows inserting custom token validation logic
+/// </summary>
+public interface ICustomTokenValidator
+{
+    /// <summary>
+    /// Custom validation logic for access tokens.
+    /// </summary>
+    /// <param name="result">The validation result so far.</param>
+    /// <returns>The validation result</returns>
+    Task<TokenValidationResult> ValidateAccessTokenAsync(TokenValidationResult result);
+
+    /// <summary>
+    /// Custom validation logic for identity tokens.
+    /// </summary>
+    /// <param name="result">The validation result so far.</param>
+    /// <returns>The validation result</returns>
+    Task<TokenValidationResult> ValidateIdentityTokenAsync(TokenValidationResult result);
+}
+
+namespace Duende.IdentityServer.Validation;
+
+//
+// Summary:
+//     Allows inserting custom validation logic into token requests
+public interface ICustomTokenRequestValidator
+{
+    //
+    // Summary:
+    //     Custom validation logic for a token request.
+    //
+    // Parameters:
+    //   context:
+    //     The context.
+    //
+    // Returns:
+    //     The validation result
+    Task ValidateAsync(CustomTokenRequestValidationContext context);
+}
+ namespace Duende.IdentityServer.Validation;
+
+//
+// Summary:
+//     Interface for the token validator
+public interface ITokenValidator
+{
+    //
+    // Summary:
+    //     Validates an access token.
+    //
+    // Parameters:
+    //   token:
+    //     The access token.
+    //
+    //   expectedScope:
+    //     The expected scope.
+    Task<TokenValidationResult> ValidateAccessTokenAsync(string token, string expectedScope = null);
+
+    //
+    // Summary:
+    //     Validates an identity token.
+    //
+    // Parameters:
+    //   token:
+    //     The token.
+    //
+    //   clientId:
+    //     The client identifier.
+    //
+    //   validateLifetime:
+    //     if set to true the lifetime gets validated. Otherwise not.
+    Task<TokenValidationResult> ValidateIdentityTokenAsync(string token, string clientId = null, bool validateLifetime = true);
+}
+```
 
 
+```c#
+ public class EmailVerificationGrantValidator : IExtensionGrantValidator // Validates email verification grant for unison users.
+
+  public class MFAGrantValidator : IExtensionGrantValidator //Validates MFA credentials for unison users (MFA code, session, device, etc).
+
+  public interface IApiKeyValidator : IExtensionGrantValidator//ApiKeyValidator
+  ```
